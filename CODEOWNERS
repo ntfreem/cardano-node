@@ -16,8 +16,8 @@ cabal.project                                                 @Jimbo4350 @newhog
 
 
 # /doc folder and README.* needs to be owned by @docs-access
-doc                                                           @docs-access
-README.*                                                      @docs-access
+doc                                                           @input-output-hk/docs-access
+README.*                                                      @input-output-hk/docs-access
 
 bench/tx-generator                                            @Jimbo4350 @newhoggy @deepfire @mgmeier @MarcFontaine
 bench                                                         @Jimbo4350 @newhoggy @deepfire @denisshevchenko @jutaro @MarcFontaine @mgmeier @fmaste @cleverca22
@@ -29,18 +29,18 @@ trace-resources                                               @Jimbo4350 @newhog
 Makefile                                                      @Jimbo4350 @newhoggy @deepfire @mgmeier @fmaste
 *.mk                                                          @Jimbo4350 @newhoggy @deepfire @mgmeier @fmaste
 
-.buildkite                                                    @Jimbo4350 @newhoggy @devops
-.github                                                       @Jimbo4350 @newhoggy @devops
-ci                                                            @Jimbo4350 @newhoggy @devops
-configuration                                                 @Jimbo4350 @newhoggy @devops
-nix                                                           @Jimbo4350 @newhoggy @devops
-*.nix                                                         @Jimbo4350 @newhoggy @devops
-flake.lock                                                    @Jimbo4350 @newhoggy @devops
-bors.toml                                                     @Jimbo4350 @newhoggy @devops
-docker-compose.yml                                            @Jimbo4350 @newhoggy @devops
-cardano-node/src/Cardano/Tracing/OrphanInstances/Network.hs   @Jimbo4350 @newhoggy @devops @coot
-cardano-node/src/Cardano/Node/Configuration/Logging.hs        @Jimbo4350 @newhoggy @devops
-cardano-node/src/Cardano/Node/Configuration/Socket.hs         @Jimbo4350 @newhoggy @devops
+.buildkite                                                    @Jimbo4350 @newhoggy @input-output-hk/devops
+.github                                                       @Jimbo4350 @newhoggy @input-output-hk/devops
+ci                                                            @Jimbo4350 @newhoggy @input-output-hk/devops
+configuration                                                 @Jimbo4350 @newhoggy @input-output-hk/devops
+nix                                                           @Jimbo4350 @newhoggy @input-output-hk/devops
+*.nix                                                         @Jimbo4350 @newhoggy @input-output-hk/devops
+flake.lock                                                    @Jimbo4350 @newhoggy @input-output-hk/devops
+bors.toml                                                     @Jimbo4350 @newhoggy @input-output-hk/devops
+docker-compose.yml                                            @Jimbo4350 @newhoggy @input-output-hk/devops
+cardano-node/src/Cardano/Tracing/OrphanInstances/Network.hs   @Jimbo4350 @newhoggy @input-output-hk/devops @coot
+cardano-node/src/Cardano/Node/Configuration/Logging.hs        @Jimbo4350 @newhoggy @input-output-hk/devops
+cardano-node/src/Cardano/Node/Configuration/Socket.hs         @Jimbo4350 @newhoggy @input-output-hk/devops
 cardano-node/src/Cardano/Node/Tracing                         @Jimbo4350 @newhoggy @deepfire @denisshevchenko @jutaro
 cardano-node/src/Cardano/Node/Tracing/Tracers/Diffusion.hs    @Jimbo4350 @newhoggy @deepfire @denisshevchenko @jutaro @coot
 cardano-node/src/Cardano/Node/Tracing/Tracers/NodeToClient.hs @Jimbo4350 @newhoggy @deepfire @denisshevchenko @jutaro @coot
@@ -48,4 +48,4 @@ cardano-node/src/Cardano/Node/Tracing/Tracers/NodeToServer.hs @Jimbo4350 @newhog
 cardano-node/src/Cardano/Node/Tracing/Tracers/NonP2P.hs       @Jimbo4350 @newhoggy @deepfire @denisshevchenko @jutaro @coot
 cardano-node/src/Cardano/Node/Tracing/Tracers/P2P.hs          @Jimbo4350 @newhoggy @deepfire @denisshevchenko @jutaro @coot
 cardano-node/src/Cardano/Node/Tracing/Tracers/Peer.hs         @Jimbo4350 @newhoggy @deepfire @denisshevchenko @jutaro @coot
-cardano-node/src/Cardano/Node/Run.hs                          @Jimbo4350 @newhoggy @devops
+cardano-node/src/Cardano/Node/Run.hs                          @Jimbo4350 @newhoggy @input-output-hk/devops
