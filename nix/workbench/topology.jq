@@ -1,10 +1,13 @@
-def loopback_node_topology_from_nixops_topology($topo; $i):
+def loopback_node_topology_from_nixops_topology($backend; $topo; $i):
     $topo.coreNodes[$i].producers                      as $producers
   | ($producers | map(ltrimstr("node-") | fromjson))   as $prod_indices
   | { Producers:
       ( $prod_indices
         | map
-          ({ addr:    "127.0.0.1"
+          ({ addr:   (if $backend == "supervisor"
+                     then "127.0.0.1"
+                     else ( "172.22." + (((. / 254) | floor) | tostring) + "." + ((. % 254 + 1) | tostring) )
+                     end)
           , port:    ($basePort + .)
           , valency: 1
           }

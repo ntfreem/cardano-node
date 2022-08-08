@@ -119,6 +119,7 @@ case "${op}" in
 
         case "$role" in
         local-bft | local-pool )
+            local backend=${WB_BACKEND:-supervisor}
             args=(-L$global_basedir
                   --slurpfile topology "$topo_dir"/topology-nixops.json
                   --argjson   basePort $basePort
@@ -127,7 +128,7 @@ case "${op}" in
                  )
             jq 'include "topology";
 
-            loopback_node_topology_from_nixops_topology($topology[0]; $i)
+            loopback_node_topology_from_nixops_topology("$backend"; $topology[0]; $i)
             ' "${args[@]}";;
         local-proxy )
             local   name=$(jq '.name'   <<<$prof --raw-output)
