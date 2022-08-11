@@ -221,8 +221,29 @@ case "$op" in
         local dir=${1:?$usage}; shift
 
         if jqtest ".node.tracer" "$dir"/profile.json
-        then progress "docker" "faking $(yellow cardano-tracer)"
-        fi;;
+        then
+          echo "'docker-compose up' tracer ..." >> "$dir/docker-compose.stderr"
+          docker-compose --file $(realpath "$dir")/docker-compose.yaml --profile tracer up --abort-on-container-exit --no-recreate > /dev/null 2>> "$dir/docker-compose.stderr" &
+          # Wait for tracer socket
+          # If tracer fails here, the rest of the cluster is brought up without
+          # any problems.
+          local socket=$(jq -r '.network.contents' "$dir/tracer/config.json")
+          local patience=$(jq '.analysis.cluster_startup_overhead_s | ceil' "$dir/profile.json") i=0
+          echo -n "workbench:  docker:  waiting ${patience}s for socket of tracer: " >&2
+          while test ! -S "$dir/tracer/$socket"
+          do printf "%3d" $i; sleep 1
+             i=$((i+1))
+             if test $i -ge $patience
+             then echo
+                  progress "docker" "$(red FATAL):  workbench:  docker:  patience ran out for $(white tracer) after ${patience}s, socket $socket"
+                  backend_docker stop-cluster "$dir"
+                  fatal "$node startup did not succeed:  check logs in $(dirname $socket)/stdout & stderr"
+             fi
+             echo -ne "\b\b\b"
+          done >&2
+          echo " tracer up (${i}s)" >&2
+        fi
+        ;;
 
     get-node-socket-path )
         local usage="USAGE: wb docker $op RUN-DIR NODE-NAME"
@@ -309,6 +330,8 @@ case "$op" in
         local usage="USAGE: wb docker $op RUN-DIR"
         local dir=${1:?$usage}; shift
 
+        # Copy the tracer's log first because it will be deleted.
+        docker-compose --file $(realpath "$dir")/docker-compose.yaml logs --no-color --no-log-prefix tracer > "$dir/tracer/stdout" 2> "$dir/tracer/stderr"
         # Copy the node's log first because it will be deleted.
         local nodes=($(jq_tolist keys "$dir"/node-specs.json))
         for node in ${nodes[*]}

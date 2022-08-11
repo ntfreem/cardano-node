@@ -1,6 +1,28 @@
 {
 
   "services": (
+    ({
+      "tracer": {
+          pull_policy: "never"
+        , image: "${WB_TRACER_IMAGE_NAME:-\($tracerImageName)}:${WB_TRACER_IMAGE_TAG:-\($tracerImageTag)}"
+        , profiles: [ "tracer" ]
+        , restart: "no"
+        , networks: {
+          "cardano-cluster": {
+            ipv4_address: "172.21.0.1"
+          }
+        }
+        , volumes: [
+          "TRACER:/var/cardano-tracer:rw"
+        ]
+        , environment: [
+            "HOME=/var/cardano-tracer"
+          , "TRACER_CONFIG=/var/cardano-tracer/config.json"
+        ]
+        , logging: {driver: "json-file"}
+      }
+    })
+    +
     (
         .
       |
@@ -20,6 +42,7 @@
               , volumes: [
                     "NODE-\(.value.name):/var/cardano-node:rw"
                   , "GENESIS:/var/cardano-node/genesis:ro"
+                  , "TRACER:/var/cardano-tracer:rw"
                 ]
               , environment: [
                   "HOST_ADDR=172.22.\(.value.i / 254 | floor).\(.value.i % 254 + 1)"
@@ -66,6 +89,19 @@
   }
 
   , volumes: (
+      {TRACER:
+        {
+          # Networks and volumes defined as `external` are never removed.
+            external: false
+          , driver: "local"
+          , driver_opts: {
+              type: "none"
+            , o: "bind"
+            , device: "${WB_RUNDIR:-./run/current}/tracer"
+          }
+        }
+      }
+    +
       (
           .
         |
