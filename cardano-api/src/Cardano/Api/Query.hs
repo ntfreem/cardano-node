@@ -48,6 +48,10 @@ module Cardano.Api.Query (
     PoolState(..),
     decodePoolState,
 
+    SerialisedPoolDistr(..),
+    PoolDistr(..),
+    decodePoolDistr,
+
     EraHistory(..),
     SystemStart(..),
 
@@ -245,6 +249,10 @@ data QueryInShelleyBasedEra era result where
     :: Maybe (Set PoolId)
     -> QueryInShelleyBasedEra era (SerialisedPoolState era)
 
+  QueryPoolDistr
+    :: Maybe (Set PoolId)
+    -> QueryInShelleyBasedEra era (SerialisedPoolDistr era)
+
 deriving instance Show (QueryInShelleyBasedEra era result)
 
 
@@ -402,6 +410,20 @@ decodePoolState
   => SerialisedPoolState era
   -> Either DecoderError (PoolState era)
 decodePoolState (SerialisedPoolState (Serialised ls)) = PoolState <$> decodeFull ls
+
+newtype SerialisedPoolDistr era
+  = SerialisedPoolDistr (Serialised (Shelley.PoolDistr (Ledger.Crypto (ShelleyLedgerEra era))))
+
+newtype PoolDistr era = PoolDistr
+  { unPoolDistr :: Shelley.PoolDistr (Ledger.Crypto (ShelleyLedgerEra era))
+  }
+
+decodePoolDistr
+  :: forall era. ()
+  => FromCBOR (Shelley.PoolDistr (Ledger.Crypto (ShelleyLedgerEra era)))
+  => SerialisedPoolDistr era
+  -> Either DecoderError (PoolDistr era)
+decodePoolDistr (SerialisedPoolDistr (Serialised ls)) = PoolDistr <$> decodeFull ls
 
 toShelleyAddrSet :: CardanoEra era
                  -> Set AddressAny
@@ -584,6 +606,12 @@ toConsensusQueryShelleyBased erainmode QueryCurrentEpochState =
 
 toConsensusQueryShelleyBased erainmode (QueryPoolState poolIds) =
     Some (consensusQueryInEraInMode erainmode (Consensus.GetCBOR (Consensus.GetPoolState (getPoolIds <$> poolIds))))
+  where
+    getPoolIds :: Set PoolId -> Set (Shelley.KeyHash Shelley.StakePool Consensus.StandardCrypto)
+    getPoolIds = Set.map (\(StakePoolKeyHash kh) -> kh)
+
+toConsensusQueryShelleyBased erainmode (QueryPoolDistr poolIds) =
+    Some (consensusQueryInEraInMode erainmode (Consensus.GetCBOR (Consensus.GetPoolDistr (getPoolIds <$> poolIds))))
   where
     getPoolIds :: Set PoolId -> Set (Shelley.KeyHash Shelley.StakePool Consensus.StandardCrypto)
     getPoolIds = Set.map (\(StakePoolKeyHash kh) -> kh)
@@ -821,6 +849,11 @@ fromConsensusQueryResultShelleyBased _ QueryCurrentEpochState q' r' =
 fromConsensusQueryResultShelleyBased _ QueryPoolState{} q' r' =
   case q' of
     Consensus.GetCBOR Consensus.GetPoolState {} -> SerialisedPoolState r'
+    _                                           -> fromConsensusQueryResultMismatch
+
+fromConsensusQueryResultShelleyBased _ QueryPoolDistr{} q' r' =
+  case q' of
+    Consensus.GetCBOR Consensus.GetPoolDistr {} -> SerialisedPoolDistr r'
     _                                           -> fromConsensusQueryResultMismatch
 
 -- | This should /only/ happen if we messed up the mapping in 'toConsensusQuery'
