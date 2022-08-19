@@ -145,7 +145,7 @@ case "$op" in
             local offset=$(profile json "$profile" |
                                jq '.derived.genesis_future_offset' --raw-output)
             local start=$(date '+%s' --date="now + $offset")
-            local start_tag=$(date --date=@$start --utc +'%Y'-'%m'-'%d'-'%H.%M')
+            local start_tag=$(date --date=@$start --utc +'%Y'-'%m'-'%d'-'%H.%M.%S')
         fi
         local args=(
             -L "$global_basedir"
