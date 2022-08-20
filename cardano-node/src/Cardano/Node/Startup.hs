@@ -208,7 +208,12 @@ prepareNodeInfo ptcl (SomeConsensusProtocol whichP pForInfo) tc nodeStartTime = 
   prepareNodeName =
     case tcNodeName tc of
       Just aName -> return aName
-      Nothing    -> pack <$> getHostName
+      Nothing -> do
+        -- The user didn't specify node's name in the configuration.
+        -- In this case we should form node's name as "host:port", where 'host' and 'port'
+        -- are taken from '--host-addr' and '--port' CLI-parameters correspondingly.
+        -- 
+        pack <$> getHostName
 
 -- | This information is taken from 'BasicInfoShelleyBased'. It is required for
 --   'cardano-tracer' service (particularly, for RTView).
