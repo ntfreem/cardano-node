@@ -93,8 +93,8 @@ mangle fkts values
       = let (o, f ) = toUTxO value
          in  (o, f idx) 
 
---TODO use Error monad
---TODO need to break this up
+--TODO: use Error monad.
+--TODO: need to break this up.
 sourceToStoreTransaction ::
      Monad m
   => TxGenerator era
