@@ -262,17 +262,8 @@ case "$op" in
                --* ) msg "FATAL:  unknown flag '$1'"; usage_docker;;
                * ) break;; esac; shift; done
 
-        if ! dockerctl start generator
-        then progress "docker" "$(red fatal: failed to start) $(white generator)"
-             echo "$(red generator.json) ------------------------------" >&2
-             cat "$dir"/tracer/tracer-config.json
-             echo "$(red tracer stdout) -----------------------------------" >&2
-             cat "$dir"/tracer/stdout
-             echo "$(red tracer stderr) -----------------------------------" >&2
-             cat "$dir"/tracer/stderr
-             echo "$(white -------------------------------------------------)" >&2
-             fatal "could not start $(white dockerd)"
-        fi
+        echo "'docker-compose up' generator ..." >> "$dir/docker-compose.stderr"
+        docker-compose --file $(realpath "$dir")/docker-compose.yaml --profile generator up --abort-on-container-exit --no-recreate > /dev/null 2>> "$dir/docker-compose.stderr" &
         ;;
 
     # Docker-specific
@@ -332,6 +323,8 @@ case "$op" in
 
         # Copy the tracer's log first because it will be deleted.
         docker-compose --file $(realpath "$dir")/docker-compose.yaml logs --no-color --no-log-prefix tracer > "$dir/tracer/stdout" 2> "$dir/tracer/stderr"
+        # Copy the generator's log first because it will be deleted.
+        docker-compose --file $(realpath "$dir")/docker-compose.yaml logs --no-color --no-log-prefix generator > "$dir/generator/stdout" 2> "$dir/generator/stderr"
         # Copy the node's log first because it will be deleted.
         local nodes=($(jq_tolist keys "$dir"/node-specs.json))
         for node in ${nodes[*]}

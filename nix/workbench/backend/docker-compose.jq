@@ -61,6 +61,36 @@
             }
         } )
     )
+    +
+    ({
+      "generator": {
+          pull_policy: "never"
+        , image: "${WB_GENERATOR_IMAGE_NAME:-\($generatorImageName)}:${WB_GENERATOR_IMAGE_TAG:-\($generatorImageTag)}"
+        , profiles: [ "generator" ]
+        , restart: "no"
+        , networks: {
+          "cardano-cluster": {
+            ipv4_address: "172.23.0.1"
+          }
+        }
+        , volumes: (
+          [
+              "GENERATOR:/var/tx-generator:rw"
+            , "GENESIS:/var/tx-generator/genesis:ro"
+            , "GENESIS-utxo-keys:/var/tx-generator/genesis/utxo-keys:ro"
+          ]
+          +
+          ( . | keys | map( "NODE-" + . + ":/var/tx-generator/" + . + ":rw" ) )
+          +
+          ( . | keys | map( "GENESIS:/var/tx-generator/" + . + "/genesis:ro" ) )
+        )
+        , environment: [
+            "HOME=/var/tx-generator"
+          , "TX_GEN_CONFIG=/var/tx-generator/run-script.json"
+        ]
+        , logging: {driver: "json-file"}
+      }
+    })
   )
 
   , "networks": {
@@ -131,6 +161,32 @@
                 type: "none"
               , o: "bind"
               , device: "${WB_RUNDIR:-./run/current}/genesis"
+          }
+        }
+      }
+    +
+      {"GENESIS-utxo-keys":
+        {
+          # Networks and volumes defined as `external` are never removed.
+            external: false
+          , driver: "local"
+          , driver_opts: {
+                type: "none"
+              , o: "bind"
+              , device: "${WB_RUNDIR:-./run/current}/genesis/utxo-keys"
+          }
+        }
+      }
+    +
+      {GENERATOR:
+        {
+          # Networks and volumes defined as `external` are never removed.
+            external: false
+          , driver: "local"
+          , driver_opts: {
+                type: "none"
+              , o: "bind"
+              , device: "${WB_RUNDIR:-./run/current}/generator"
           }
         }
       }
