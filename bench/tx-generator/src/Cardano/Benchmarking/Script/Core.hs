@@ -22,6 +22,7 @@ import           Control.Monad.IO.Class
 import           Control.Monad.Trans.Except
 import           "contra-tracer" Control.Tracer (nullTracer)
 import           Data.Ratio ((%))
+import           Streaming
 import qualified Data.Text as Text (unpack)
 import           Prelude
 
@@ -208,24 +209,6 @@ waitForEra era = do
       liftIO $ threadDelay 1_000_000
       waitForEra era
 
-runWalletScriptInMode :: forall era.
-     IsShelleyBasedEra era
-  => SubmitMode
-  -> WalletScript era
-  -> ActionM ()
-runWalletScriptInMode submitMode s = do
-  step <- liftIO $ runWalletScript s
-  case step of
-    Done -> return ()
-    Error err -> throwE $ ApiError $ show err
-    NextTx nextScript tx -> do
-      case submitMode of
-        LocalSocket -> void $ localSubmitTx $ txInModeCardano tx
-        NodeToNode _ -> throwE $ ApiError "NodeToNodeMode not supported in runWalletScriptInMode"
-        DumpToFile filePath -> dumpToFile filePath $ txInModeCardano tx
-        DiscardTX -> return ()
-      runWalletScriptInMode submitMode nextScript
-
 localSubmitTx :: TxInMode CardanoMode -> ActionM (SubmitResult (TxValidationErrorInMode CardanoMode))
 localSubmitTx tx = do
   submit <- getLocalSubmitTx
@@ -249,6 +232,51 @@ makeMetadata = do
   case mkMetadata $ unTxAdditionalSize payloadSize of
     Right m -> return m
     Left err -> throwE $ MetadataError err
+
+submitAction :: AnyCardanoEra -> SubmitMode -> Generator -> ActionM ()
+submitAction era submitMode generator = withEra era $ submitInEra submitMode generator
+
+submitInEra :: forall era. IsShelleyBasedEra era => SubmitMode -> Generator -> AsType era -> ActionM ()
+submitInEra submitMode generator era = do
+  txStream <- evalGenerator generator era
+  case submitMode of
+    NodeToNode _ -> error "todo"
+    LocalSocket -> submitAll (void . localSubmitTx . txInModeCardano) txStream
+    DumpToFile filePath -> submitAll (dumpToFile filePath . txInModeCardano) txStream
+    DiscardTX -> submitAll (const $ return ()) txStream
+ where
+  -- todo: use Streaming.run
+  submitAll :: (Tx era -> ActionM ()) -> TxStream IO era -> ActionM ()
+  submitAll callback stream = do
+    step <- liftIO $ Streaming.inspect stream
+    case step of
+      (Left Nothing) -> return ()
+      (Left (Just err)) -> throwE $ ApiError err
+      (Right (tx :> rest)) -> do
+        callback tx
+        submitAll callback rest
+
+evalGenerator :: forall era. IsShelleyBasedEra era => Generator -> AsType era -> ActionM (TxStream IO era)
+evalGenerator generator era =
+  error "todo"
+
+runWalletScriptInMode :: forall era.
+     IsShelleyBasedEra era
+  => SubmitMode
+  -> WalletScript era
+  -> ActionM ()
+runWalletScriptInMode submitMode s = do
+  step <- liftIO $ runWalletScript s
+  case step of
+    Done -> return ()
+    Error err -> throwE $ ApiError $ show err
+    NextTx nextScript tx -> do
+      case submitMode of
+        LocalSocket -> void $ localSubmitTx $ txInModeCardano tx
+        NodeToNode _ -> throwE $ ApiError "NodeToNodeMode not supported in runWalletScriptInMode"
+        DumpToFile filePath -> dumpToFile filePath $ txInModeCardano tx
+        DiscardTX -> return ()
+      runWalletScriptInMode submitMode nextScript
 
 runBenchmark ::
      AnyCardanoEra

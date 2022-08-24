@@ -8,6 +8,7 @@ where
 import           Prelude
 
 import           Data.Maybe
+import           Streaming
 import           Control.Concurrent.MVar
 
 import           Cardano.Api
@@ -32,9 +33,10 @@ type ToUTxOList era split = split -> ([TxOut CtxTx era], TxId -> [Fund])
 type CreateAndStore m era = Lovelace -> (TxOut CtxTx era, TxIx -> TxId -> m ())
 
 type CreateAndStoreList m era split = split -> ([TxOut CtxTx era], TxId -> m ())
-
 -- 'ToUTxOList era' is more powerful than '[ ToUTxO era ]' but
 -- '[ ToUTxO era ]` is easier to construct.
+
+type TxStream m era = Stream (Of (Tx era)) m (Maybe String)
 
 createAndStore :: ToUTxO era -> (Fund -> m ()) -> CreateAndStore m era
 createAndStore create store lovelace = (utxo, toStore)

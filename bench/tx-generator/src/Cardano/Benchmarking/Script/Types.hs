@@ -37,12 +37,22 @@ data Action where
   CreateChange       :: !AnyCardanoEra -> !WalletName -> !SubmitMode -> !PayMode -> !PayMode -> !Lovelace -> !Int -> Action
   RunBenchmark       :: !AnyCardanoEra -> !WalletName -> !SubmitMode -> !ThreadName -> !RunBenchmarkAux -> Maybe WalletName -> !TPSRate -> Action
   WaitBenchmark      :: !ThreadName -> Action
+  Submit             :: !AnyCardanoEra -> !SubmitMode -> !Generator -> Action
   CancelBenchmark    :: !ThreadName -> Action
   Reserved           :: [String] -> Action
   WaitForEra         :: !AnyCardanoEra -> Action
   SetProtocolParameters :: ProtocolParametersSource -> Action
   deriving (Show, Eq)
 deriving instance Generic Action
+
+data Generator where
+  Split :: !WalletName -> !SubmitMode -> !PayMode -> !PayMode -> [ Lovelace ] -> Generator  
+  SplitN :: !WalletName -> !SubmitMode -> !PayMode -> !PayMode -> !Lovelace -> !Int -> Generator
+--  BechmarkGen ::   
+  Repeat :: !Int -> !Generator -> Generator
+  Sequence :: [Generator] -> Generator
+  deriving (Show, Eq)
+deriving instance Generic Generator
 
 data ProtocolParametersSource where
   QueryLocalNode :: ProtocolParametersSource
@@ -53,6 +63,7 @@ deriving instance Generic ProtocolParametersSource
 data SubmitMode where
   LocalSocket :: SubmitMode
   NodeToNode  :: NonEmpty NodeIPv4Address -> SubmitMode
+--  Benchmark   :: NonEmpty NodeIPv4Address -> !ThreadName -> !TPSRate ->  SubmitMode
   DumpToFile  :: !FilePath -> SubmitMode
   DiscardTX   :: SubmitMode
   deriving (Show, Eq)
